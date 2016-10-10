@@ -14,10 +14,10 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.TaskStackBuilder;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -33,17 +33,22 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
 
     private MediaPlayer player;
     private TextView txtStatus;
-    private TextView txtModo;
+    private TextView txtTempo;
     private long currentTime;
     private boolean isPlaying;
     private SeekBar volume;
     private Button btnPlay;
     private Button btnStop;
     private ProgressBar pgBar;
-    private String radioURL = "http://cast3.hoost.com.br:8843/live";
-    //private String radioURL = "http://audio.cabobranco.tv.br:8000/cbn";
+
+    private TextView radioTitle;
+    private TextView radioDesc;
 
 
+
+    //private String radioURL = "http://cast3.hoost.com.br:8843/live";
+    private String radioURL = "http://audio.cabobranco.tv.br:8000/cbfm";
+    //private String radioURL = "http://servidor36.brlogic.com:8038/live";
 
 
 
@@ -52,17 +57,20 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        txtStatus = (TextView) findViewById(R.id.txtStatus);
-        txtModo = (TextView) findViewById(R.id.txtModo);
-        volume = (SeekBar)findViewById(R.id.volumeBar);
-        btnPlay = (Button) findViewById(R.id.btnPlay);
-        btnStop = (Button) findViewById(R.id.btnStop);
-        pgBar = (ProgressBar) findViewById(R.id.progress);
-        txtModo.setText("Presione o botão PLAY para iniciar");
+            txtStatus = (TextView) findViewById(R.id.txtStatus);
+            txtTempo = (TextView) findViewById(R.id.txtTempo);
+            volume = (SeekBar) findViewById(R.id.volumeBar);
+            btnPlay = (Button) findViewById(R.id.btnPlay);
+            btnStop = (Button) findViewById(R.id.btnStop);
+            pgBar = (ProgressBar) findViewById(R.id.progress);
+            radioTitle = (TextView) findViewById(R.id.radio_title);
+            radioDesc = (TextView) findViewById(R.id.radio_desc);
 
-        txtStatus.setText("");
 
-        VolumeControls();
+            txtStatus.setText("Presione o botão PLAY para iniciar");
+
+
+            VolumeControls();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = getWindow();
@@ -106,6 +114,24 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
         });
     }
 
+
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_UP)
+        {
+            int index = volume.getProgress();
+            volume.setProgress(index + 1);
+            return true;
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN)
+        {
+            int index = volume.getProgress();
+            volume.setProgress(index - 1);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -118,38 +144,7 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
     @Override
     protected void onPause() {
         super.onPause();
-
-        //Notificacao
-
-        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
-                .setSmallIcon(R.drawable.notlogo)
-                .setContentTitle("Radio UFPB")
-                .setContentText("Escutando...");
-
-        NotificationManager mNotificationManager =
-                (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-        // Creates an explicit intent for an Activity in your app
-        Intent resultIntent = new Intent(this, MainActivity.class);
-
-        // The stack builder object will contain an artificial back stack for the
-        // started Activity.
-        // This ensures that navigating backward from the Activity leads out of
-        // your application to the Home screen.
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        // Adds the back stack for the Intent (but not the Intent itself)
-        stackBuilder.addParentStack(MainActivity.class);
-        // Adds  the Intent that starts the Activity to the top of the stack
-        stackBuilder.addNextIntent(resultIntent);
-        PendingIntent resultPendingIntent =
-                stackBuilder.getPendingIntent(
-                        0123,
-                        PendingIntent.FLAG_UPDATE_CURRENT
-                );
-        mBuilder.setContentIntent(resultPendingIntent);
-        // mId allows you to update the notification later on.
-        mNotificationManager.notify(0123, mBuilder.build());
-
-        Log.i("Estado da Aplicação: ","onPause");
+        Log.i("Estado da Aplicação : ","onPause");
 
     }
 
@@ -170,12 +165,6 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
             player.release();
             player = null;
 
-
-            //parar a thread de atualizar o tempo currenttime
-
-            NotificationManager mNotificationManager =
-                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-            mNotificationManager.cancel(0123);
         }
 
         Log.i("Estado da Aplicação: ","onDestroy");
@@ -188,7 +177,7 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
         if(player == null){
 
             try {
-                txtModo.setText("Carregando...");
+                txtStatus.setText("Carregando...");
                 btnPlay.setEnabled(false);
                 btnPlay.setVisibility(View.GONE);
                 pgBar.setVisibility(View.VISIBLE);
@@ -210,7 +199,7 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
         }else{
             player.start();
             isPlaying = true;
-            updateTimeMusicThread(player, txtStatus);
+            updateTimeMusicThread(player, txtTempo);
         }
 
     }
@@ -223,14 +212,33 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
             player.release();
             player = null;
             currentTime = 0;
-            txtStatus.setText("");
-            txtModo.setText("Parado");
+            txtTempo.setText("");
+            txtStatus.setText("Parado");
             btnPlay.setEnabled(true);
             btnPlay.setVisibility(View.VISIBLE);
             btnStop.setVisibility(View.GONE);
 
+
+
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.cancelAll();
+
         }
 
+    }
+
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
+        if(player != null) {
+            player.stop();
+            NotificationManager mNotificationManager =
+                    (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            mNotificationManager.cancelAll();
+        }
     }
 
     private String getTimeString(long millis) {
@@ -269,13 +277,14 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
 
         new Thread(){
             public void run(){
-                while(isPlaying){
+                while(isPlaying ){
                     try{
                         updateTimeMusic(mp.getCurrentPosition(), view);
                         Thread.sleep(1000);
 
                     }catch (IllegalStateException e){
                         e.printStackTrace();
+                        return;
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
@@ -289,7 +298,7 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
 
-        txtModo.setText("Bufferizando...");
+        txtStatus.setText("Bufferizando...");
 
     }
 
@@ -316,18 +325,55 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
 
         mp.seekTo((int) currentTime);
         mp.setLooping(true);
-        updateTimeMusicThread(mp, txtStatus);
-        txtModo.setText("Reproduzindo...");
+        updateTimeMusicThread(mp, txtTempo);
+
+        txtStatus.setText("Reproduzindo...");
         btnPlay.setVisibility(View.GONE);
         pgBar.setVisibility(View.GONE);
         btnStop.setVisibility(View.VISIBLE);
+
+        lancaNotificacao(MainActivity.this);
+
     }
 
+
+    public void lancaNotificacao(Context context){
+
+        final NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        String contentTitle = "RADIO UFPB";
+
+        // construct the Notification object.
+        final android.support.v4.app.NotificationCompat.Builder  builder = new NotificationCompat.Builder(MainActivity.this)
+                .setContentTitle(contentTitle)
+                .setPriority(2)
+                .setOngoing(true)
+                .setContentText(txtStatus.getText())
+                .setSmallIcon(R.drawable.notlogo);
+
+        // Creates an explicit intent for an Activity in your app
+        Intent resultIntent = new Intent(MainActivity.this, MainActivity.class);
+
+        resultIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        // Because clicking the notification opens a new ("special") activity, there's
+        // no need to create an artificial back stack.
+        PendingIntent resultPendingIntent =
+                PendingIntent.getActivity(
+                        MainActivity.this,
+                        0,
+                        resultIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT
+                );
+
+        builder.setContentIntent(resultPendingIntent);
+
+        nm.notify(R.drawable.notlogo, builder.build());
+
+    }
 
     @Override
     public void onSeekComplete(MediaPlayer mp) {
 
-        Log.i("Script", "onSeekComplete()");
     }
 
 
@@ -345,4 +391,14 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
     public void onStopTrackingTouch(SeekBar seekBar) {
 
     }
+
+
+
+
+
 }
+
+
+
+
+

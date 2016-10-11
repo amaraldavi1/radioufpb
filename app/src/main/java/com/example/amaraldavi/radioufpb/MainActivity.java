@@ -46,9 +46,10 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
 
 
 
-    //private String radioURL = "http://cast3.hoost.com.br:8843/live";
+    //private String radioURL = "http://cast3.hoost.com.br:8843/stream";
     private String radioURL = "http://audio.cabobranco.tv.br:8000/cbfm";
     //private String radioURL = "http://servidor36.brlogic.com:8038/live";
+    //private String radioURL = "http://icecast.eu-a.live.streaminginter.net:8000/rasot/mpeg3_hq.mp3";
 
 
 
@@ -217,6 +218,8 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
             btnPlay.setEnabled(true);
             btnPlay.setVisibility(View.VISIBLE);
             btnStop.setVisibility(View.GONE);
+            radioTitle.setText("");
+            radioDesc.setText("");
 
 
 
@@ -333,6 +336,10 @@ public class MainActivity extends AppCompatActivity implements OnPreparedListene
         btnStop.setVisibility(View.VISIBLE);
 
         lancaNotificacao(MainActivity.this);
+
+        AsyncTaskProc pegaInfo = new AsyncTaskProc(this, radioURL);
+        pegaInfo.execute();
+
 
     }
 
